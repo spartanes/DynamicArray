@@ -63,6 +63,8 @@ public:
 
 	bool operator!=(const Vector& other) const { return !(*this == other); } // operator !=
 	
+	explicit operator bool()const {return size > 0;} // overload operator
+
 	void resize(int newSize) 
 	{
 		int* dynamicArrayTemp = new int[newSize];
@@ -74,6 +76,11 @@ public:
 		dynamicArray = dynamicArrayTemp;
 		size = newSize;
 		dynamicArrayTemp = nullptr;
+	}
+
+	explicit operator bool()const 
+	{
+		return size > 0;
 	}
 };
 int main() 
