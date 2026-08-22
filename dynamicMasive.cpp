@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdexcept>
 
 class Vector 
 {
@@ -10,6 +11,29 @@ public:
 		size = sizeOffArray;
 		dynamicArray = new int[size];
 	}
+	Vector(const Vector& other) 
+	{
+		size = other.size;
+		dynamicArray = new int[size];
+		for (unsigned int i = 0;i < size;++i) 
+		{
+			dynamicArray[i] = other.dynamicArray[i];
+		}
+	}
+	Vector& operator=(const Vector& other)
+	{
+		if (this != &other)
+		{
+			delete[] dynamicArray;
+			size = other.size;
+			dynamicArray = new int[size];
+			for (unsigned int i = 0; i < size; ++i)
+			{
+				dynamicArray[i] = other.dynamicArray[i];
+			}
+		}
+		return *this;
+	}
 	~Vector() //Destructor
 	{
 		delete[] dynamicArray;
@@ -18,12 +42,38 @@ public:
 	
 	void set(int index, int newValue) 
 	{
+		if (index < 0 || static_cast<unsigned int>(index) >= size)
+		{
+			throw std::out_of_range("Vector set error: Index out of range!");
+		}
 		dynamicArray[index] = newValue;
 	}
 	
 	int get(int index) const 
 	{ 
-		return dynamicArray[index]; 
+		if (index < 0 || static_cast<unsigned int>(index) >= size)
+		{
+			throw std::out_of_range("Vector get error: Index out of range!");
+		}
+		return dynamicArray[index];
+	}
+
+	int& operator[](unsigned int index)
+	{
+		if (index >= size)
+		{
+			throw std::out_of_range("Vector [] error: Index out of range!");
+		}
+		return dynamicArray[index];
+	}
+
+	const int& operator[](unsigned int index) const
+	{
+		if (index >= size)
+		{
+			throw std::out_of_range("Vector [] const error: Index out of range!");
+		}
+		return dynamicArray[index];
 	}
 	
 	void resize(int newSize) 
@@ -41,17 +91,20 @@ public:
 };
 int main() 
 {
-	Vector myVector(3);
-	myVector.set(0, 10);
-	myVector.set(1, 20);
-	myVector.set(2, 30);
+	Vector v(5);
 
-	std::cout << "Before resize, element 1: " << myVector.get(1) << std::endl;
+	try
+	{
+		v.set(0, 10);
+		std::cout << "v[0] = " << v.get(0) << std::endl;
 
-	myVector.resize(5);
-	myVector.set(3, 40);
-
-	std::cout << "After resize, element 1: " << myVector.get(1) << std::endl;
-	std::cout << "After resize, element 3: " << myVector.get(3) << std::endl;
+		// Тест виходу за межі масиву
+		std::cout << "Accessing element at index 100..." << std::endl;
+		std::cout << v[100] << std::endl;
+	}
+	catch (const std::out_of_range& e)
+	{
+		std::cerr << "Caught exception: " << e.what() << std::endl;
+	}
 }
 
