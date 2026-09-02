@@ -103,7 +103,6 @@ public:
 	unsigned int getSize() const { return size; }
 };
 
-
 template <typename T, std::size_t N>
 class StaticArray
 {
@@ -152,6 +151,35 @@ public:
 	constexpr std::size_t getSize() const { return N; }
 };
 
+template <typename T>
+void insertion_sort(Vector<T>& arr)
+{
+	int size = static_cast<int>(arr.getSize());
+
+	for (int i = 1; i < size; ++i)
+	{
+		T value = arr[i];
+		int j = i - 1;
+
+		while (j >= 0 && arr[j] > value)
+		{
+			arr[j + 1] = arr[j];
+			--j;
+		}
+		arr[j + 1] = value;
+	}
+}
+
+template <typename T>
+void print_vector(const Vector<T>& arr, const std::string& label)
+{
+	std::cout << label << ": ";
+	for (unsigned int i = 0; i < arr.getSize(); ++i)
+	{
+		std::cout << arr[i] << " ";
+	}
+	std::cout << std::endl;
+}
 
 int main()
 {
@@ -176,6 +204,18 @@ int main()
 	{
 		std::cout << "sArray[" << i << "] = " << sArray[i] << std::endl;
 	}
+
+	std::cout << "\n=== Test Insertion Sort ===" << std::endl;
+	Vector<int> unsortedVector(5);
+	unsortedVector[0] = 42;
+	unsortedVector[1] = 15;
+	unsortedVector[2] = 88;
+	unsortedVector[3] = 3;
+	unsortedVector[4] = 27;
+
+	print_vector(unsortedVector, "Before sort");
+	insertion_sort(unsortedVector);
+	print_vector(unsortedVector, "After sort ");
 
 	std::cout << "\n=== Exception Test ===" << std::endl;
 	try
