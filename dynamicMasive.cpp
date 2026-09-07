@@ -6,23 +6,39 @@ template <typename T>
 class Vector
 {
 private:
-	unsigned int size = 0;
+	std::size_t size_ = 0;
+	std::size_t capacity_ = 0;
 	T* dynamicArray = nullptr;
 
-public:
-	Vector() : size(0), dynamicArray(nullptr) {}
-
-	Vector(int sizeOffArray)
+	void reallocate()
 	{
-		size = sizeOffArray;
-		dynamicArray = new T[size]();
+		std::size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * 2;
+		T* newData = new T[newCapacity]();
+
+		for (std::size_t i = 0; i < size_; ++i)
+		{
+			newData[i] = dynamicArray[i];
+		}
+
+		delete[] dynamicArray;
+		dynamicArray = newData;
+		capacity_ = newCapacity;
+	}
+
+public:
+	Vector() : size_(0), capacity_(0), dynamicArray(nullptr) {}
+
+	explicit Vector(std::size_t initialSize)
+		: size_(initialSize), capacity_(initialSize)
+	{
+		dynamicArray = new T[capacity_]();
 	}
 
 	Vector(const Vector& other)
+		: size_(other.size_), capacity_(other.capacity_)
 	{
-		size = other.size;
-		dynamicArray = new T[size];
-		for (unsigned int i = 0; i < size; ++i)
+		dynamicArray = new T[capacity_];
+		for (std::size_t i = 0; i < size_; ++i)
 		{
 			dynamicArray[i] = other.dynamicArray[i];
 		}
@@ -33,9 +49,10 @@ public:
 		if (this != &other)
 		{
 			delete[] dynamicArray;
-			size = other.size;
-			dynamicArray = new T[size];
-			for (unsigned int i = 0; i < size; ++i)
+			size_ = other.size_;
+			capacity_ = other.capacity_;
+			dynamicArray = new T[capacity_];
+			for (std::size_t i = 0; i < size_; ++i)
 			{
 				dynamicArray[i] = other.dynamicArray[i];
 			}
@@ -49,183 +66,98 @@ public:
 		dynamicArray = nullptr;
 	}
 
-	void set(int index, const T& newValue)
+	void push_back(const T& value)
 	{
-		if (index < 0 || static_cast<unsigned int>(index) >= size)
+		if (size_ == capacity_)
 		{
-			throw std::out_of_range("Vector set error: Index out of range!");
+			reallocate();
 		}
-		dynamicArray[index] = newValue;
+		dynamicArray[size_] = value;
+		++size_;
 	}
 
-	T get(int index) const
+	void resize(std::size_t newSize)
 	{
-		if (index < 0 || static_cast<unsigned int>(index) >= size)
+		if (newSize > capacity_)
 		{
-			throw std::out_of_range("Vector get error: Index out of range!");
+			T* newData = new T[newSize]();
+			for (std::size_t i = 0; i < size_; ++i)
+			{
+				newData[i] = dynamicArray[i];
+			}
+			delete[] dynamicArray;
+			dynamicArray = newData;
+			capacity_ = newSize;
 		}
-		return dynamicArray[index];
+		size_ = newSize;
 	}
 
-	T& operator[](unsigned int index)
+	T& operator[](std::size_t index)
 	{
-		if (index >= size)
+		if (index >= size_)
 		{
 			throw std::out_of_range("Vector [] error: Index out of range!");
 		}
 		return dynamicArray[index];
 	}
 
-	const T& operator[](unsigned int index) const
+	const T& operator[](std::size_t index) const
 	{
-		if (index >= size)
+		if (index >= size_)
 		{
 			throw std::out_of_range("Vector [] const error: Index out of range!");
 		}
 		return dynamicArray[index];
 	}
 
-	void resize(int newSize)
-	{
-		T* dynamicArrayTemp = new T[newSize]();
-		unsigned int elementsToCopy = (newSize < static_cast<int>(size)) ? newSize : size;
+	std::size_t getSize() const { return size_; }
+	std::size_t getCapacity() const { return capacity_; }
 
-		for (unsigned int i = 0; i < elementsToCopy; i++)
+	friend std::ostream& operator<<(std::ostream& out, const Vector<T>& vector)
+	{
+		out << "[";
+		for (std::size_t i = 0; i < vector.size_; ++i)
 		{
-			dynamicArrayTemp[i] = dynamicArray[i];
+			out << vector.dynamicArray[i];
+			if (i + 1 < vector.size_)
+			{
+				out << ", ";
+			}
 		}
-		delete[] dynamicArray;
-		dynamicArray = dynamicArrayTemp;
-		size = newSize;
-		dynamicArrayTemp = nullptr;
+		out << "]";
+		return out;
 	}
 
-	unsigned int getSize() const { return size; }
+	friend std::istream& operator>>(std::istream& in, Vector<T>& vector)
+	{
+		for (std::size_t i = 0; i < vector.size_; ++i)
+		{
+			in >> vector.dynamicArray[i];
+		}
+		return in;
+	}
 };
-
-template <typename T, std::size_t N>
-class StaticArray
-{
-private:
-	T data_[N]{};
-
-public:
-	StaticArray() = default;
-
-	void set(int index, const T& newValue)
-	{
-		if (index < 0 || static_cast<std::size_t>(index) >= N)
-		{
-			throw std::out_of_range("StaticArray set error: Index out of range!");
-		}
-		data_[index] = newValue;
-	}
-
-	T get(int index) const
-	{
-		if (index < 0 || static_cast<std::size_t>(index) >= N)
-		{
-			throw std::out_of_range("StaticArray get error: Index out of range!");
-		}
-		return data_[index];
-	}
-
-	T& operator[](std::size_t index)
-	{
-		if (index >= N)
-		{
-			throw std::out_of_range("StaticArray [] error: Index out of range!");
-		}
-		return data_[index];
-	}
-
-	const T& operator[](std::size_t index) const
-	{
-		if (index >= N)
-		{
-			throw std::out_of_range("StaticArray [] const error: Index out of range!");
-		}
-		return data_[index];
-	}
-
-	constexpr std::size_t getSize() const { return N; }
-};
-
-template <typename T>
-void insertion_sort(Vector<T>& arr)
-{
-	int size = static_cast<int>(arr.getSize());
-
-	for (int i = 1; i < size; ++i)
-	{
-		T value = arr[i];
-		int j = i - 1;
-
-		while (j >= 0 && arr[j] > value)
-		{
-			arr[j + 1] = arr[j];
-			--j;
-		}
-		arr[j + 1] = value;
-	}
-}
-
-template <typename T>
-void print_vector(const Vector<T>& arr, const std::string& label)
-{
-	std::cout << label << ": ";
-	for (unsigned int i = 0; i < arr.getSize(); ++i)
-	{
-		std::cout << arr[i] << " ";
-	}
-	std::cout << std::endl;
-}
 
 int main()
 {
-	std::cout << "=== Test Vector<int> ===" << std::endl;
-	Vector<int> vInt(3);
-	vInt[0] = 100;
-	vInt[1] = 200;
-	std::cout << "vInt[0] = " << vInt[0] << ", vInt[1] = " << vInt[1] << std::endl;
+	std::cout << "=== Test Vector Push Back & Capacity ===" << std::endl;
+	Vector<int> vec;
 
-	std::cout << "\n=== Test Vector<double> ===" << std::endl;
-	Vector<double> vDouble(2);
-	vDouble.set(0, 3.14159);
-	std::cout << "vDouble.get(0) = " << vDouble.get(0) << std::endl;
-
-	std::cout << "\n=== Test StaticArray<std::string, 3> ===" << std::endl;
-	StaticArray<std::string, 3> sArray;
-	sArray[0] = "C++";
-	sArray[1] = "Templates";
-	sArray[2] = "StaticArray";
-
-	for (std::size_t i = 0; i < sArray.getSize(); ++i)
+	for (int i = 1; i <= 5; ++i)
 	{
-		std::cout << "sArray[" << i << "] = " << sArray[i] << std::endl;
+		vec.push_back(i * 10);
+		std::cout << "Pushed " << i * 10
+			<< " | Size: " << vec.getSize()
+			<< " | Capacity: " << vec.getCapacity() << std::endl;
 	}
 
-	std::cout << "\n=== Test Insertion Sort ===" << std::endl;
-	Vector<int> unsortedVector(5);
-	unsortedVector[0] = 42;
-	unsortedVector[1] = 15;
-	unsortedVector[2] = 88;
-	unsortedVector[3] = 3;
-	unsortedVector[4] = 27;
+	std::cout << "\n=== Test Output Stream (operator<<) ===" << std::endl;
+	std::cout << "Vector contents: " << vec << std::endl;
 
-	print_vector(unsortedVector, "Before sort");
-	insertion_sort(unsortedVector);
-	print_vector(unsortedVector, "After sort ");
+	std::cout << "\n=== Test Input Stream (operator>>) ===" << std::endl;
+	Vector<int> inputVec(3);
+	std::cout << "Enter 3 integers: ";
+	std::cin >> inputVec;
+	std::cout << "You entered: " << inputVec << std::endl;
 
-	std::cout << "\n=== Exception Test ===" << std::endl;
-	try
-	{
-		std::cout << sArray[10] << std::endl;
-	}
-	catch (const std::out_of_range& e)
-	{
-		std::cerr << "Caught exception: " << e.what() << std::endl;
-	}
-
-	return 0;
 }
